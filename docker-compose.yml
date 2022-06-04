@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  api:
+    image: postgres:14
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-store:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=anywallet
+volumes:
+  db-store:

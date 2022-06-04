@@ -9,6 +9,7 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.request.*
 import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.koin.ktor.ext.inject
 
 @Serializable
@@ -29,13 +30,13 @@ fun Application.configureQueryRouting(){
         route("/wallet"){
             post("/search") {
                 val req = call.receive<HistoryRequest>()
-                call.respond(listOf(
-                    Record(req.startDateTime, 0.3.toFloat()) ,
-                    Record(req.startDateTime, 0.3.toFloat()) ,
-                    Record(req.startDateTime, 0.3.toFloat()) ,
-                ))
+                val records = transaction {
+                    queryRecordRepository.getRecordsBetweenDates(
+                        req.startDateTime, req.endDateTime
+                    )
+                }
+                call.respond(records.map { Record(it.datetime, it.amount) })
             }
-
         }
     }
 }
