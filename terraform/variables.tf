@@ -19,3 +19,11 @@ variable "project_name" {
   type = string
   default = "anywallet"
 }
+
+variable "aurora_user" {
+  type = string
+}
+
+variable "aurora_password" {
+  type = string
+}

@@ -53,8 +53,8 @@ resource "aws_security_group" "alb-sg" {
   }
 }
 
-resource "aws_security_group" "ecs-service-sg" {
-  name        = "${var.project_name}-${var.env_name}-ecs-service-sg"
+resource "aws_security_group" "ecs-task-sg" {
+  name        = "${var.project_name}-${var.env_name}-ecs-task-sg"
   description = "Allow HTTP inbound traffic from ALB to ECS Service"
   vpc_id      = var.vpc_id
   egress {
@@ -71,7 +71,29 @@ resource "aws_security_group" "ecs-service-sg" {
     security_groups = [aws_security_group.alb-sg.id]
   }
   tags = {
-    "Name" = "${var.project_name}-${var.env_name}-ecs-service-sg"
+    "Name" = "${var.project_name}-${var.env_name}-ecs-task-sg"
+  }
+}
+
+resource "aws_security_group" "aurora-sg" {
+  name        = "${var.project_name}-${var.env_name}-aurora-sg"
+  description = "Allow HTTP inbound traffic from ECS to Aurora Service"
+  vpc_id      = var.vpc_id
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs-task-sg.id]
+  }
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-aurora-sg"
   }
 }
 
@@ -107,4 +129,61 @@ resource "aws_kinesis_stream" "rmu" {
 resource "aws_dynamodb_kinesis_streaming_destination" "ddb-stream-with-kinesis" {
   stream_arn = aws_kinesis_stream.rmu.arn
   table_name = aws_dynamodb_table.command-db.name
+}
+
+##################################################################
+# Aurora Serverless
+##################################################################
+
+resource "aws_db_subnet_group" "aurora-subnet-group" {
+  name       = "main"
+  subnet_ids = data.aws_subnets.isolated.ids
+
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-aurora-subnet-group"
+  }
+}
+
+resource "aws_rds_cluster" "aurora-cluster" {
+  cluster_identifier = "${var.project_name}-${var.env_name}-aurora-cluster"
+  db_subnet_group_name = aws_db_subnet_group.aurora-subnet-group.name
+  engine             = "aurora-postgresql"
+  engine_mode        = "provisioned"
+  engine_version     = "13.6"
+  database_name      = "anywallet"
+  master_username    = var.aurora_user
+  master_password    = var.aurora_password
+  skip_final_snapshot = true
+  vpc_security_group_ids = [aws_security_group.aurora-sg.id]
+
+  serverlessv2_scaling_configuration {
+    max_capacity = 1.0
+    min_capacity = 0.5
+  }
+
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-aurora-cluster"
+  }
+}
+
+resource "aws_rds_cluster_instance" "aurora-instance-1" {
+  cluster_identifier = aws_rds_cluster.aurora-cluster.id
+  identifier = "${var.project_name}-${var.env_name}-aurora-instance-1"
+  instance_class     = "db.serverless"
+  engine             = aws_rds_cluster.aurora-cluster.engine
+  engine_version     = aws_rds_cluster.aurora-cluster.engine_version
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-aurora-instance-1"
+  }
+}
+
+resource "aws_rds_cluster_instance" "aurora-instance-2" {
+  cluster_identifier = aws_rds_cluster.aurora-cluster.id
+  identifier = "${var.project_name}-${var.env_name}-aurora-instance-2"
+  instance_class     = "db.serverless"
+  engine             = aws_rds_cluster.aurora-cluster.engine
+  engine_version     = aws_rds_cluster.aurora-cluster.engine_version
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-aurora-instance-2"
+  }
 }
