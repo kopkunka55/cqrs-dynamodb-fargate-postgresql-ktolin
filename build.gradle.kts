@@ -34,6 +34,7 @@ dependencies {
     implementation("org.postgresql:postgresql:42.3.4")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("io.insert-koin:koin-ktor:3.2.0")
+    implementation("org.jetbrains.exposed:exposed:0.17.14")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }

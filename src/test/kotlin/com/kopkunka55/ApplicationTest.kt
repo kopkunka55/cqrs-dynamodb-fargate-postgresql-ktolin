@@ -55,7 +55,7 @@ class ApplicationTest {
             }
             setBody(
                 Json.encodeToString(
-                    HistoryRequest("2004-10-19T:16:00:00+00:00", "2004-10-19T:16:00:00+00:00")
+                    HistoryRequest("2004-10-19T13:00:00+00:00", "2004-10-19T16:00:00+00:00")
                 )
             )
         }.
