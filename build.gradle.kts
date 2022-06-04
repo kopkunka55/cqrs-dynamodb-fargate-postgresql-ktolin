@@ -29,7 +29,9 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages-jvm:$ktor_version")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
+    implementation("software.amazon.awssdk:dynamodb:2.17.191")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("io.insert-koin:koin-ktor:3.2.0")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }
