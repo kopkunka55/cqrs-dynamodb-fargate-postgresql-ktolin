@@ -22,7 +22,7 @@ class RecordRepositoryImpl(override val tableName: String): RecordRepository {
     override fun saveRecord(requestId: String, datetime: String, amount: Float): Record {
         val dateTimeAtUTC = ZonedDateTime.parse(datetime).withZoneSameInstant(ZoneOffset.UTC).toString()
         val itemValues = mutableMapOf<String, AttributeValue>()
-        itemValues["requestId"] = AttributeValue.builder().s(requestId).build()
+        itemValues["request_id"] = AttributeValue.builder().s(requestId).build()
         itemValues["datetime"] = AttributeValue.builder().s(dateTimeAtUTC).build()
         itemValues["amount"] = AttributeValue.builder().n(amount.toString()).build()
 

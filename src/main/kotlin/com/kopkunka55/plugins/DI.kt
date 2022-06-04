@@ -10,7 +10,7 @@ fun Application.configureDI(){
    install(Koin) {
        modules(
            module {
-               factory<RecordRepository> { RecordRepositoryImpl(environment.config.property("ktor.aws.ddb_table").toString()) }
+               factory<RecordRepository> { RecordRepositoryImpl(environment.config.property("ktor.aws.ddb_table").getString()) }
            }
        )
    }

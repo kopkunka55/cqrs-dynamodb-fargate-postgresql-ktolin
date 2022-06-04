@@ -32,7 +32,8 @@ fun Application.configureRouting() {
             post {
                 val request = call.receive<Record>()
                 val requestId = call.request.headers["X-Request-Id"].toString()
-                call.respond(Record(request.datetime, request.amount))
+                val record = recordRepository.saveRecord(requestId, request.datetime, request.amount)
+                call.respond(Record(record.datetime, record.amount))
             }
             post("/search") {
                val req = call.receive<HistoryRequest>()
