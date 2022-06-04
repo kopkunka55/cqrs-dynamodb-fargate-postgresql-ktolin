@@ -9,14 +9,13 @@ import io.ktor.server.request.*
 
 fun Application.configureRouting() {
     install(StatusPages) {
-        exception<AuthenticationException> { call, cause ->
-            call.respond(HttpStatusCode.Unauthorized)
-        }
-        exception<AuthorizationException> { call, cause ->
-            call.respond(HttpStatusCode.Forbidden)
-        }
 
     }
     routing {
+        route("/health-check"){
+            get {
+                call.respondText("OK")
+            }
+        }
     }
 }
