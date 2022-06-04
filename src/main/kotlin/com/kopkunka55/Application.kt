@@ -8,7 +8,12 @@ fun main(args: Array<String>): Unit =
 
 @Suppress("unused") // application.conf references the main function. This annotation prevents the IDE from marking it as unused.
 fun Application.module() {
-    configureRouting()
     configureSerialization()
-    configureDI()
+    if (environment.config.property("ktor.application.mode").getString() == "COMMAND"){
+        configureRouting()
+        configureDI()
+    } else {
+        configureQueryRouting()
+        configureQueryDI()
+    }
 }

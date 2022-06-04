@@ -1,5 +1,6 @@
 package com.kopkunka55.plugins
 
+import com.kopkunka55.repository.QueryRecordRepository
 import com.kopkunka55.repository.RecordRepository
 import io.ktor.server.routing.*
 import io.ktor.http.*
@@ -16,10 +17,30 @@ data class Record(val datetime: String, val amount: Float)
 @Serializable
 data class HistoryRequest(val startDateTime: String, val endDateTime: String)
 
-fun Application.configureRouting() {
-    install(StatusPages) {
+fun Application.configureQueryRouting(){
+    val queryRecordRepository: QueryRecordRepository by inject()
 
+    routing {
+        route("/health-check"){
+            get {
+                call.respondText("OK")
+            }
+        }
+        route("/wallet"){
+            post("/search") {
+                val req = call.receive<HistoryRequest>()
+                call.respond(listOf(
+                    Record(req.startDateTime, 0.3.toFloat()) ,
+                    Record(req.startDateTime, 0.3.toFloat()) ,
+                    Record(req.startDateTime, 0.3.toFloat()) ,
+                ))
+            }
+
+        }
     }
+}
+
+fun Application.configureRouting() {
     val recordRepository: RecordRepository by inject()
 
     routing {
@@ -35,15 +56,6 @@ fun Application.configureRouting() {
                 val record = recordRepository.saveRecord(requestId, request.datetime, request.amount)
                 call.respond(Record(record.datetime, record.amount))
             }
-            post("/search") {
-               val req = call.receive<HistoryRequest>()
-                call.respond(listOf(
-                    Record(req.startDateTime, 0.3.toFloat()) ,
-                    Record(req.startDateTime, 0.3.toFloat()) ,
-                    Record(req.startDateTime, 0.3.toFloat()) ,
-                ))
-            }
-
         }
     }
 }
