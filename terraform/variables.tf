@@ -9,3 +9,13 @@ variable "vpc_id" {
 variable "my_ip" {
   type = string
 }
+
+variable "env_name" {
+  type = string
+  default = "dev"
+}
+
+variable "project_name" {
+  type = string
+  default = "anywallet"
+}
