@@ -5,8 +5,7 @@ import com.kopkunka55.repository.RecordRepository
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
+import software.amazon.awssdk.services.dynamodb.model.*
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
@@ -15,12 +14,13 @@ class RecordRepositoryImpl(override val tableName: String): RecordRepository {
         .region(Region.US_EAST_1)
         .credentialsProvider(ProfileCredentialsProvider.create())
         .build()
-    override fun getRecordsBetweenDates(startDateTime: String, endDateTime: String): List<Record> {
-        TODO("Not yet implemented")
+
+    private fun String.toUTCDateTime(): String{
+        return ZonedDateTime.parse(this).withZoneSameInstant(ZoneOffset.UTC).toString()
     }
 
     override fun saveRecord(requestId: String, datetime: String, amount: Float): Record {
-        val dateTimeAtUTC = ZonedDateTime.parse(datetime).withZoneSameInstant(ZoneOffset.UTC).toString()
+        val dateTimeAtUTC = datetime.toUTCDateTime()
         val itemValues = mutableMapOf<String, AttributeValue>()
         itemValues["request_id"] = AttributeValue.builder().s(requestId).build()
         itemValues["datetime"] = AttributeValue.builder().s(dateTimeAtUTC).build()
