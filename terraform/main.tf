@@ -174,3 +174,86 @@ resource "aws_rds_cluster_instance" "aurora-instance-2" {
     "Name" = "${var.project_name}-${var.env_name}-aurora-instance-2"
   }
 }
+
+##################################################################
+# AWS ALB
+##################################################################
+
+resource "aws_lb_target_group" "alb-target-group" {
+  name     = "tf-example-lb-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = data.aws_vpc.vpc.id
+}
+
+resource "aws_lb" "alb" {
+  name               = "${var.project_name}-${var.env_name}-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb-sg]
+  subnets            = [for subnet in aws_subnet.public : subnet.id]
+
+  enable_deletion_protection = false
+
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-alb"
+  }
+}
+
+
+
+##################################################################
+# ECS Service
+##################################################################
+
+resource "aws_ecs_cluster" "ecs-cluster" {
+  name = "${var.project_name}-${var.env_name}-ecs-cluster"
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-ecs-cluster"
+  }
+}
+
+resource "aws_ecs_task_definition" "ecs-query-task-df" {
+  family = "query-task"
+  cpu = "256"
+  memory = "512"
+  network_mode = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  container_definitions = jsonencode(file("."))
+}
+
+resource "aws_ecs_task_definition" "ecs-command-task-df" {
+  family = "command-task"
+  cpu = "256"
+  memory = "512"
+  network_mode = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  container_definitions = jsonencode(file("."))
+}
+
+resource "aws_ecs_service" "ecs-query-service" {
+  name            = "mongodb"
+  cluster         = aws_ecs_cluster.ecs-cluster.id
+  task_definition = aws_ecs_task_definition.ecs-query-task-df.arn
+  desired_count   = 3
+  launch_type = "FARGATE"
+  platform_version = "1.4.0"
+
+  network_configuration {
+    subnets = data.aws_subnets.private
+    security_groups = [aws_security_group.ecs-task-sg.id]
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.foo.arn
+    container_name   = "mongo"
+    container_port   = 8080
+  }
+
+}

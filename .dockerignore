@@ -1,0 +1,8 @@
+/build/
+/.gradle/
+/.idea/
+/.git/
+/Dockerfile
+/docker-compose*
+/README.*
+/terraform

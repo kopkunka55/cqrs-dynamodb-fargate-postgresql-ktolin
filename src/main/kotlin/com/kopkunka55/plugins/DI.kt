@@ -13,15 +13,6 @@ fun Application.configureDI(){
        modules(
            module {
                factory<CommandRecordRepository> { CommandRecordRepositoryImpl(environment.config.property("ktor.aws.ddb_table").getString()) }
-           }
-       )
-   }
-}
-
-fun Application.configureQueryDI(){
-   install(Koin) {
-       modules(
-           module {
                factory<QueryRecordRepository> { QueryRecordRepositoryImpl() }
            }
        )

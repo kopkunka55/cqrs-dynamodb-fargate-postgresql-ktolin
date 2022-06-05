@@ -1,5 +1,7 @@
 package com.kopkunka55
 
+import com.kopkunka55.contoller.HistoryRequest
+import com.kopkunka55.contoller.Record
 import io.ktor.server.routing.*
 import io.ktor.http.*
 import io.ktor.server.plugins.statuspages.*
@@ -22,7 +24,7 @@ import java.util.UUID
 
 class ApplicationTest {
     @Test
-    fun testRoot() = testApplication {
+    fun testRoot() = testApplication  {
         client.get("/health-check").apply {
             assertEquals(HttpStatusCode.OK, status)
             assertEquals("OK", bodyAsText())
@@ -31,7 +33,7 @@ class ApplicationTest {
 
     @Test
     fun saveRecord() = testApplication {
-        client.post("/wallet"){
+        client.post("/"){
             headers {
                 append("X-Request-Id", UUID.randomUUID().toString())
                 append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
@@ -49,7 +51,7 @@ class ApplicationTest {
 
     @Test
     fun getHistoryOfWalletEachHour() = testApplication {
-        client.post("/wallet/search") {
+        client.post("/search") {
             headers {
                 append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             }
