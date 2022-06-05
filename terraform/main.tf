@@ -118,19 +118,6 @@ resource "aws_dynamodb_table" "command-db" {
   }
 }
 
-resource "aws_kinesis_stream" "rmu" {
-  name = "${var.project_name}-${var.env_name}"
-  shard_count = 1
-  tags = {
-    "Name" = "${var.project_name}-${var.env_name}-kinesis-stream"
-  }
-}
-
-resource "aws_dynamodb_kinesis_streaming_destination" "ddb-stream-with-kinesis" {
-  stream_arn = aws_kinesis_stream.rmu.arn
-  table_name = aws_dynamodb_table.command-db.name
-}
-
 ##################################################################
 # Aurora Serverless
 ##################################################################
