@@ -99,17 +99,17 @@ resource "aws_security_group" "aurora-sg" {
 
 resource "aws_dynamodb_table" "command-db" {
   name     = "${var.project_name}-${var.env_name}"
-  hash_key = "request_id"
-  range_key = "datetime"
+  hash_key = "PK"
+  range_key = "SK"
 
   billing_mode = "PAY_PER_REQUEST"
 
   attribute {
-    name = "request_id"
+    name = "PK"
     type = "S"
   }
   attribute {
-    name = "datetime"
+    name = "SK"
     type = "S"
   }
 
