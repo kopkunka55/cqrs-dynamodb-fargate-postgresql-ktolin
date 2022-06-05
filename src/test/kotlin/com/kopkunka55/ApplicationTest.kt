@@ -39,7 +39,7 @@ class ApplicationTest {
             val datetime = ZonedDateTime.now()
             val dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
             setBody(
-                Json.encodeToString( Record(datetime.format(dtf), 0.3.toFloat() ) )
+                Json.encodeToString( Record(datetime.format(dtf), 20.3.toFloat() ) )
             )
         }.apply {
             assertEquals(HttpStatusCode.OK, status)

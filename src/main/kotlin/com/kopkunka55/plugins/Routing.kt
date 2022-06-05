@@ -1,10 +1,8 @@
 package com.kopkunka55.plugins
 
 import com.kopkunka55.repository.QueryRecordRepository
-import com.kopkunka55.repository.RecordRepository
+import com.kopkunka55.repository.CommandRecordRepository
 import io.ktor.server.routing.*
-import io.ktor.http.*
-import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.request.*
@@ -42,7 +40,7 @@ fun Application.configureQueryRouting(){
 }
 
 fun Application.configureRouting() {
-    val recordRepository: RecordRepository by inject()
+    val commandRecordRepository: CommandRecordRepository by inject()
 
     routing {
         route("/health-check"){
@@ -54,7 +52,7 @@ fun Application.configureRouting() {
             post {
                 val request = call.receive<Record>()
                 val requestId = call.request.headers["X-Request-Id"].toString()
-                val record = recordRepository.saveRecord(requestId, request.datetime, request.amount)
+                val record = commandRecordRepository.saveRecord(requestId, request.datetime, request.amount)
                 call.respond(Record(record.datetime, record.amount))
             }
         }
