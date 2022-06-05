@@ -11,11 +11,12 @@ fun main(args: Array<String>): Unit =
 fun Application.module() {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
     configureSerialization()
-    if (environment.config.property("ktor.application.mode").getString() == "COMMAND"){
+    val cqrsMode = environment.config.propertyOrNull("ktor.application.mode")!!.getString() ?: TODO("Error Handling")
+    if (cqrsMode == "COMMAND"){
         configureRouting()
         configureDI()
         println("COMMAND MODE")
-    } else {
+    } else if (cqrsMode == "QUERY"){
         configureQueryRouting()
         configureQueryDI()
         configureExposed()

@@ -37,7 +37,7 @@ class ApplicationTest {
                 append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             }
             val datetime = ZonedDateTime.now()
-            val dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ssXXX")
+            val dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
             setBody(
                 Json.encodeToString( Record(datetime.format(dtf), 0.3.toFloat() ) )
             )
