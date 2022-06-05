@@ -3,6 +3,7 @@ package com.kopkunka55.infrastructure
 import com.kopkunka55.domain.CommandRecord
 import com.kopkunka55.repository.CommandRecordRepository
 import kotlinx.serialization.builtins.serializer
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -14,7 +15,6 @@ import java.time.format.DateTimeFormatter
 class CommandRecordRepositoryImpl(override val tableName: String): CommandRecordRepository {
     private val ddbClient = DynamoDbClient.builder()
         .region(Region.US_EAST_1)
-        .credentialsProvider(ProfileCredentialsProvider.create())
         .build()
 
     private fun String.toUTCDateTime(): ZonedDateTime{
