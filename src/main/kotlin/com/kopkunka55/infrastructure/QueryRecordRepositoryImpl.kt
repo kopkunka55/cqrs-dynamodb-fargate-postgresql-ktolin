@@ -2,12 +2,14 @@ package com.kopkunka55.infrastructure
 
 import com.kopkunka55.domain.QueryRecord
 import com.kopkunka55.repository.QueryRecordRepository
+import io.ktor.server.plugins.*
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.javatime.datetime
+import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -23,14 +25,19 @@ class QueryRecordEntity(id: EntityID<Int>): IntEntity(id){
 }
 
 class QueryRecordRepositoryImpl: QueryRecordRepository{
+    private val logger = LoggerFactory.getLogger("QueryRecordRepository")
     private fun String.toDateTimeAtUTC(): LocalDateTime{
         val dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
-        return LocalDateTime.parse(this, dtf)
+        val result = LocalDateTime.parse(this, dtf)
+        result ?: throw BadRequestException("Input datetiime format is wrong")
+        return result
     }
     private fun LocalDateTime.toUTCDateTimeString(): String{
         val datetime = LocalDateTime.parse(this.toString())
         val dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
-        return datetime.format(dtf) + "+00:00"
+        val result = datetime.format(dtf) + "+00:00"
+        result ?: throw BadRequestException("Input datetime format is wrong")
+        return result
     }
 
     override fun getRecordsBetweenDates(startDateTime: String, endDateTime: String): List<QueryRecord> {
@@ -44,6 +51,7 @@ class QueryRecordRepositoryImpl: QueryRecordRepository{
     override fun updateRecordPerHour(dateTime: String, sum: Float): QueryRecord {
         val dateTimeAtUTC = dateTime.toDateTimeAtUTC()
 
+        // Check if the record id already exists
         QueryRecordEntity.find {
             QueryRecordTable.datetime eq dateTimeAtUTC
         }.also {

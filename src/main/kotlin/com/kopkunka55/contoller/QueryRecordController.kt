@@ -12,15 +12,25 @@ import org.koin.ktor.ext.inject
 @Serializable
 data class HistoryRequest(val startDateTime: String, val endDateTime: String)
 
+@Serializable
+data class QueryRecord(val datetime: String, val amount: Float)
+
 fun Route.configureQueryRouter() {
     val queryRecordRepository: QueryRecordRepository by inject()
-    post("/search") {
-        val req = call.receive<HistoryRequest>()
-        val records = transaction {
-            queryRecordRepository.getRecordsBetweenDates(
-                req.startDateTime, req.endDateTime
-            )
+
+    route("/query"){
+        get("/health-check") {
+            call.respondText("OK")
         }
-        call.respond(records.map { Record(it.datetime, it.amount) })
+        post("/search") {
+            val req = call.receive<HistoryRequest>()
+            val records = transaction {
+                queryRecordRepository.getRecordsBetweenDates(
+                    req.startDateTime, req.endDateTime
+                )
+            }
+            call.respond(records.map { QueryRecord(it.datetime, it.amount) })
+        }
     }
+
 }
