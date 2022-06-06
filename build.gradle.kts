@@ -43,6 +43,7 @@ dependencies {
     implementation("com.amazonaws:aws-lambda-java-tests:1.1.1")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("io.mockk:mockk:1.12.4")
 }
 
 flyway {

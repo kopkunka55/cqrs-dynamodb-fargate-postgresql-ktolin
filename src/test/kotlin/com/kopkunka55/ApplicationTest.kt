@@ -18,6 +18,7 @@ import com.kopkunka55.plugins.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -38,7 +39,7 @@ class ApplicationTest {
                 append("X-Request-Id", UUID.randomUUID().toString())
                 append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             }
-            val datetime = ZonedDateTime.now()
+            val datetime = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
             val dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
             setBody(
                 Json.encodeToString( Record(datetime.format(dtf), 20.3.toFloat() ) )
