@@ -4,9 +4,9 @@ WORKDIR /home/gradle/src
 RUN gradle shadowJar --no-daemon
 
 FROM amazoncorretto:17-alpine3.15
-EXPOSE 8000:8000
-ENV PORT=8000
+EXPOSE 8080:8080
+ENV PORT=8080
 RUN mkdir /app
-COPY --from=build /home/gradle/src/build/libs/*.jar /app/ktor-docker-sample.jar
+COPY --from=build /home/gradle/src/build/libs/*.jar /app/anywallet-api.jar
 
-ENTRYPOINT ["java","-jar","/app/ktor-docker-sample.jar"]
+ENTRYPOINT ["java","-jar","/app/anywallet-api.jar"]

@@ -4,6 +4,7 @@ import com.kopkunka55.contoller.configureCommandRouter
 import com.kopkunka55.contoller.configureQueryRouter
 import io.ktor.server.application.*
 import com.kopkunka55.plugins.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.slf4j.LoggerFactory
 import java.util.TimeZone
@@ -19,6 +20,12 @@ fun Application.module() {
     configureStatusPages()
 
     val logger = LoggerFactory.getLogger("Application")
+
+    routing {
+        get("/health-check") {
+            call.respondText("OK")
+        }
+    }
 
     when (environment.config.property("ktor.application.mode").getString()) {
         "COMMAND" -> {

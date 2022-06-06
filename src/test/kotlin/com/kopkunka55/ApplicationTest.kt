@@ -15,17 +15,10 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class ApplicationTest {
-    @Test
-    fun commandHealthCheck() = testApplication  {
-        client.get("/command/health-check").apply {
-            assertEquals(HttpStatusCode.OK, status)
-            assertEquals("OK", bodyAsText())
-        }
-    }
 
     @Test
     fun queryHealthCheck() = testApplication  {
-        client.get("/query/health-check").apply {
+        client.get("/health-check").apply {
             assertEquals(HttpStatusCode.OK, status)
             assertEquals("OK", bodyAsText())
         }
@@ -33,9 +26,9 @@ class ApplicationTest {
 
     @Test
     fun saveRecord() = testApplication {
-        client.post("/command"){
+        client.post("/"){
             headers {
-                append("X-Request-Id", UUID.randomUUID().toString())
+                append("X-Amzn-Trace-Id", UUID.randomUUID().toString())
                 append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             }
             val datetime = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
@@ -51,7 +44,7 @@ class ApplicationTest {
 
     @Test
     fun getHistoryOfWalletEachHour() = testApplication {
-        client.post("/query/search") {
+        client.post("/search") {
             headers {
                 append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
             }

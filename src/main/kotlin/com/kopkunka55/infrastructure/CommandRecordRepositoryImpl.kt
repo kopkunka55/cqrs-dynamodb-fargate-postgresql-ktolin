@@ -89,8 +89,9 @@ class CommandRecordRepositoryImpl(override val tableName: String): CommandRecord
         // Whether record exists in given time range or not, event record should be just inserted
         val itemValues = mutableMapOf<String, AttributeValue>()
         itemValues["PK"] = AttributeValue.fromS(pk)
-        itemValues["SK"] = AttributeValue.fromS(dateTimeAtUTC.format(dtf))
+        itemValues["SK"] = AttributeValue.fromS(requestId)
         itemValues["amount"] = AttributeValue.fromN(amount.toString())
+        itemValues["datetime"] = AttributeValue.fromS(dateTimeAtUTC.toString())
 
         val createRecord = Put.builder().tableName(tableName).item(itemValues).build()
         actions.add(TransactWriteItem.builder().put(createRecord).build())

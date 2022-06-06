@@ -193,8 +193,8 @@ resource "aws_rds_cluster_instance" "aurora-instance-2" {
 # AWS ALB
 ##################################################################
 
-resource "aws_lb" "alb" {
-  name               = "${var.project_name}-${var.env_name}-alb"
+resource "aws_lb" "alb-command" {
+  name               = "${var.project_name}-${var.env_name}-alb-command"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb-sg.id]
@@ -203,12 +203,26 @@ resource "aws_lb" "alb" {
   enable_deletion_protection = false
 
   tags = {
-    "Name" = "${var.project_name}-${var.env_name}-alb"
+    "Name" = "${var.project_name}-${var.env_name}-alb-command"
   }
 }
 
-resource "aws_lb_listener" "alb-https-listener" {
-  load_balancer_arn = aws_lb.alb.arn
+resource "aws_lb" "alb-query" {
+  name               = "${var.project_name}-${var.env_name}-alb-query"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb-sg.id]
+  subnets            = data.aws_subnets.public.ids
+
+  enable_deletion_protection = false
+
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-alb-query"
+  }
+}
+
+resource "aws_lb_listener" "alb-https-listener-command" {
+  load_balancer_arn = aws_lb.alb-command.arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
@@ -218,39 +232,21 @@ resource "aws_lb_listener" "alb-https-listener" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.alb-command-tg.arn
   }
-  depends_on = [aws_lb_target_group.alb-command-tg, aws_lb_target_group.alb-query-tg]
+  depends_on = [aws_lb_target_group.alb-command-tg]
 }
 
-resource "aws_lb_listener_rule" "alb-listener-rule-query" {
-  listener_arn = aws_lb_listener.alb-https-listener.arn
-  priority     = 99
+resource "aws_lb_listener" "alb-https-listener-query" {
+  load_balancer_arn = aws_lb.alb-query.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.acm_certification_arn
 
-  action {
+  default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.alb-query-tg.arn
   }
-
-  condition {
-    path_pattern {
-      values = ["/query/*"]
-    }
-  }
-}
-
-resource "aws_lb_listener_rule" "alb-listener-rule-command" {
-  listener_arn = aws_lb_listener.alb-https-listener.arn
-  priority     = 98
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.alb-command-tg.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/command/*"]
-    }
-  }
+  depends_on = [aws_lb_target_group.alb-query-tg]
 }
 
 resource "aws_lb_target_group" "alb-query-tg" {
@@ -260,7 +256,7 @@ resource "aws_lb_target_group" "alb-query-tg" {
   vpc_id   = data.aws_vpc.vpc.id
   target_type = "ip"
   health_check {
-   path = "/command/health-check"
+   path = "/health-check"
   }
   tags = {
     "Name" = "${var.project_name}-${var.env_name}-alb-query-tg"
@@ -274,7 +270,7 @@ resource "aws_lb_target_group" "alb-command-tg" {
   target_type = "ip"
   vpc_id   = data.aws_vpc.vpc.id
   health_check {
-    path = "/query/health-check"
+    path = "/health-check"
   }
   tags = {
     "Name" = "${var.project_name}-${var.env_name}-alb-command-tg"
@@ -343,6 +339,16 @@ resource "aws_ecs_cluster" "ecs-cluster" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "command-log-group" {
+  name              = "/ecs/anywallet/command"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_group" "query-log-group" {
+  name              = "/ecs/anywallet/query"
+  retention_in_days = 30
+}
+
 resource "aws_ecs_task_definition" "ecs-query-task-df" {
   family = "query-task"
   requires_compatibilities = ["FARGATE"]
@@ -354,14 +360,22 @@ resource "aws_ecs_task_definition" "ecs-query-task-df" {
   container_definitions = jsonencode([
     {
       name      = "query-api"
-      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/anywallet-api:latest"
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/anywallet-api:v1.0.4"
       cpu       = 256
       memory    = 512
       essential = true
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-region = var.region
+          awslogs-stream-prefix = "query"
+          awslogs-group = "/ecs/anywallet/query"
+        }
+      }
       environment = [
         {
           name = "DATABASE_ENDPOINT"
-          value = aws_rds_cluster.aurora-cluster.endpoint
+          value = "jdbc:postgresql://${aws_rds_cluster.aurora-cluster.endpoint}/anywallet"
         },
         {
           name = "DATABASE_USER"
@@ -404,10 +418,18 @@ resource "aws_ecs_task_definition" "ecs-command-task-df" {
   container_definitions = jsonencode([
     {
       name      = "command-api"
-      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/anywallet-api:latest"
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/anywallet-api:v1.0.4"
       cpu       = 256
       memory    = 512
       essential = true
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-region = var.region
+          awslogs-stream-prefix = "command"
+          awslogs-group = "/ecs/anywallet/command"
+        }
+      }
       environment = [
         {
           name = "PORT"
@@ -477,3 +499,69 @@ resource "aws_ecs_service" "ecs-command-service" {
     "Name" = "${var.project_name}-${var.env_name}-ecs-command-service"
   }
 }
+
+##################################################################
+# AWS Lambda
+##################################################################
+
+/*
+resource "aws_iam_role" "lambda-execution-role" {
+  name                = "${var.project_name}-${var.env_name}-lambda-execution-role"
+  managed_policy_arns = ["arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"]
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      },
+    ]
+  })
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-lambda-execution-role"
+  }
+}
+
+resource "aws_lambda_function" "read-model-updater-function" {
+  function_name = "${var.project_name}-${var.env_name}-rmu-function"
+  role          = aws_iam_role.lambda-execution-role.arn
+  handler       = "Lambda::handleRequest"
+  package_type = "Image"
+  image_uri = ""
+
+  # The filebase64sha256() function is available in Terraform 0.11.12 and later
+  # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
+  # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
+  source_code_hash = filebase64sha256("lambda_function_payload.zip")
+
+  runtime = "java11"
+
+  environment {
+    variables = {
+      foo = "bar"
+    }
+  }
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-ecs-command-service"
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "every_hour" {
+  name        = "${var.project_name}-${var.env_name}-eventbridge-schedule"
+  description = "Update Read Model each hour"
+  schedule_expression = "cron(0 1 * * *)"
+
+  tags = {
+    "Name" = "${var.project_name}-${var.env_name}-eventbridge-schedule"
+  }
+}
+
+resource "aws_cloudwatch_event_target" "sns" {
+  rule      = aws_cloudwatch_event_rule.every_hour.id
+  arn       = aws_lambda_function.read-model-updater-function.arn
+}
+*/
