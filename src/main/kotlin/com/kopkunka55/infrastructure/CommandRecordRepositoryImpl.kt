@@ -2,9 +2,6 @@ package com.kopkunka55.infrastructure
 
 import com.kopkunka55.domain.CommandRecord
 import com.kopkunka55.repository.CommandRecordRepository
-import kotlinx.serialization.builtins.serializer
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.*

@@ -35,7 +35,7 @@ class Main: RequestHandler<Map<String,String>, Unit>{
     override fun handleRequest(input: Map<String, String>?, context: Context?) {
         // val logger = context?.logger
         val currentTime = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
-        val dtf = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHH")
+        val dtf = DateTimeFormatter.ofPattern("yyyyMMddHH")
         val dtfWithTZ = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
 
         val key = HashMap<String, AttributeValue>()
