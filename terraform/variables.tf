@@ -27,3 +27,7 @@ variable "aurora_user" {
 variable "aurora_password" {
   type = string
 }
+
+variable "acm_certification_arn" {
+  type = string
+}
