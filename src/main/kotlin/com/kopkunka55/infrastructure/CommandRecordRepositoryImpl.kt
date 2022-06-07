@@ -2,8 +2,6 @@ package com.kopkunka55.infrastructure
 
 import com.kopkunka55.domain.CommandRecord
 import com.kopkunka55.repository.CommandRecordRepository
-import io.ktor.server.plugins.*
-import org.slf4j.LoggerFactory
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.*
@@ -12,16 +10,13 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 class CommandRecordRepositoryImpl(override val tableName: String): CommandRecordRepository {
-    private val logger = LoggerFactory.getLogger("CommandRepository")
 
     private val ddbClient = DynamoDbClient.builder()
         .region(Region.US_EAST_1)
         .build()
 
-    private fun String.toUTCDateTime(): ZonedDateTime{
-        val result = ZonedDateTime.parse(this).withZoneSameInstant(ZoneOffset.UTC)
-        result?: BadRequestException("The input datetime format is wrong")
-        return  result
+    private fun String.toUTCDateTime(): ZonedDateTime {
+        return ZonedDateTime.parse(this).withZoneSameInstant(ZoneOffset.UTC)
     }
 
     override fun saveRecord(requestId: String, datetime: String, amount: Float): CommandRecord {
