@@ -349,6 +349,11 @@ resource "aws_cloudwatch_log_group" "query-log-group" {
   retention_in_days = 30
 }
 
+resource "aws_cloudwatch_log_group" "rmu-log-group" {
+  name              = "/ecs/anywallet/rmu"
+  retention_in_days = 30
+}
+
 resource "aws_ecs_task_definition" "ecs-query-task-df" {
   family = "query-task"
   requires_compatibilities = ["FARGATE"]
@@ -501,13 +506,12 @@ resource "aws_ecs_service" "ecs-command-service" {
 }
 
 ##################################################################
-# AWS Lambda
+# ECS Scheduled Task (RMU)
 ##################################################################
 
-/*
-resource "aws_iam_role" "lambda-execution-role" {
-  name                = "${var.project_name}-${var.env_name}-lambda-execution-role"
-  managed_policy_arns = ["arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"]
+resource "aws_iam_role" "ecs-event-role" {
+  name                = "${var.project_name}-${var.env_name}-ecs-event-role"
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceEventsRole"]
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -516,52 +520,79 @@ resource "aws_iam_role" "lambda-execution-role" {
         Effect = "Allow"
         Sid    = ""
         Principal = {
-          Service = "lambda.amazonaws.com"
+          Service = "events.amazonaws.com"
         }
       },
     ]
   })
   tags = {
-    "Name" = "${var.project_name}-${var.env_name}-lambda-execution-role"
+    "Name" = "${var.project_name}-${var.env_name}-ecs-event-role"
   }
 }
 
-resource "aws_lambda_function" "read-model-updater-function" {
-  function_name = "${var.project_name}-${var.env_name}-rmu-function"
-  role          = aws_iam_role.lambda-execution-role.arn
-  handler       = "Lambda::handleRequest"
-  package_type = "Image"
-  image_uri = ""
-
-  # The filebase64sha256() function is available in Terraform 0.11.12 and later
-  # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
-  # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
-  source_code_hash = filebase64sha256("lambda_function_payload.zip")
-
-  runtime = "java11"
-
-  environment {
-    variables = {
-      foo = "bar"
-    }
-  }
+resource "aws_ecs_task_definition" "ecs-rmu-task-df" {
+  family = "rmu-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = 256
+  memory                   = 512
+  task_role_arn = aws_iam_role.task-role.arn
+  execution_role_arn = aws_iam_role.execution-role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "rmu"
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/anywallet-rmu:v1.0.0"
+      cpu       = 256
+      memory    = 512
+      essential = true
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-region = var.region
+          awslogs-stream-prefix = "rmu"
+          awslogs-group = "/ecs/anywallet/rmu"
+        }
+      }
+      environment = [
+        {
+          name = "DATABASE_ENDPOINT"
+          value = "jdbc:postgresql://${aws_rds_cluster.aurora-cluster.endpoint}/anywallet"
+        },
+        {
+          name = "DATABASE_USER"
+          value = var.aurora_user
+        },
+        {
+          name = "DATABASE_PASSWORD"
+          value = var.aurora_password
+        }
+      ]
+    },
+  ])
   tags = {
-    "Name" = "${var.project_name}-${var.env_name}-ecs-command-service"
+    "Name" = "${var.project_name}-${var.env_name}-ecs-rmu-task-df"
   }
 }
 
 resource "aws_cloudwatch_event_rule" "every_hour" {
   name        = "${var.project_name}-${var.env_name}-eventbridge-schedule"
   description = "Update Read Model each hour"
-  schedule_expression = "cron(0 1 * * *)"
+  schedule_expression = "cron(0 * * * ? *)"
 
   tags = {
     "Name" = "${var.project_name}-${var.env_name}-eventbridge-schedule"
   }
 }
 
-resource "aws_cloudwatch_event_target" "sns" {
-  rule      = aws_cloudwatch_event_rule.every_hour.id
-  arn       = aws_lambda_function.read-model-updater-function.arn
+resource "aws_cloudwatch_event_target" "ecs_scheduled_task" {
+  target_id = "run-scheduled-task-every-hour"
+  arn       = aws_ecs_cluster.ecs-cluster.arn
+  rule      = aws_cloudwatch_event_rule.every_hour.name
+  role_arn  = aws_iam_role.ecs-event-role.arn
+
+  ecs_target {
+    task_count          = 1
+    task_definition_arn = aws_ecs_task_definition.ecs-rmu-task-df.arn
+  }
 }
-*/
+

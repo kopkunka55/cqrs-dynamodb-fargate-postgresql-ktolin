@@ -2,7 +2,7 @@
 /.gradle/
 /.idea/
 /.git/
-/Dockerfile
+/api.Dockerfile
 /docker-compose*
 /README.*
 /terraform
