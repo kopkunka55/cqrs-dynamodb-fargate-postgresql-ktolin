@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  api:
+  db:
     image: postgres:14
     container_name: postgres
     ports:
@@ -12,5 +12,22 @@ services:
       - POSTGRES_USER=dev
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=anywallet
+  api-command:
+    build: api.Dockerfile
+    container_name: cqrs-api-command
+    ports:
+      - "8081:8080"
+    environment:
+      - CQRS_MODE=QUERY
+  api-query:
+    build: api.Dockerfile
+    container_name: cqrs-api-query
+    ports:
+      - "8082:8080"
+    environment:
+      - CQRS_MODE=QUERY
+      - DATABASE_ENDPOINT=""jdbc:postgresql://localhost:5432/anywallet"
+      - DATABASE_USER_NAME="dev"
+      - DATABASE_PASSWORD="password"
 volumes:
   db-store:

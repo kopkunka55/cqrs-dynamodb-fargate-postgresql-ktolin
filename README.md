@@ -4,16 +4,18 @@ This is a simple wallet application built with Ktor and DynamoDB to record walle
 
 ## Tech Stack
 
-| Module               | Tech                      |
-|----------------------|---------------------------|
-| Backend APIs         | Ktor                      |
-| Backend APIs Hosting | AWS Fargate               |
-| ORM                  | Exposed                   |
-| RDBMS Migration Tool | Flyway                    |
-| Command Datasource   | Amazon DynamoDB           |
-| Query Datasource     | Amazon Aurora PostgreSQL  |
-| Jobs                 | Amazon ECS scheduled task |
-| Unit test            | JUnit                     |
+| Module                 | Tech                      |
+|------------------------|---------------------------|
+| Language               | Kotlin/Gradle             |
+| Backend APIs Framework | Ktor                      |
+| Backend APIs Hosting   | AWS Fargate               |
+| ORM                    | Exposed                   |
+| IaC                    | Terraform                 |
+| RDBMS Migration Tool   | Flyway                    |
+| Command Datasource     | Amazon DynamoDB           |
+| Query Datasource       | Amazon Aurora PostgreSQL  |
+| Jobs                   | Amazon ECS scheduled task |
+| Unit test              | JUnit                     |
 
 ## Architecture Design
 
@@ -24,12 +26,12 @@ This is a simple wallet application built with Ktor and DynamoDB to record walle
 
 CQRS is designed based on DDD. In this project, software architecture is constructed by Onion architecture pattern, which is one of the pattern to archive DDD. The design of each layer is following.
 
-|  Layer | Package  |
-|---------|-------|
-| Presentation  | com.kopkunka55.controller |
+| Layer          | Package                       |
+|----------------|-------------------------------|
+| Presentation   | com.kopkunka55.controller     |
 | Infrastructure | com.kopkunka55.infrastructure |
-| Domain | com.kopkunka55.repository |
-| Domain Model | com.kopkunka55.domain |
+| Domain         | com.kopkunka55.repository     |
+| Domain Model   | com.kopkunka55.domain         |
 
 
 ## DynamoDB Table Design
@@ -49,21 +51,41 @@ The design of table is following [Single-Table-Design](https://aws.amazon.com/bl
 
 CQRS pattern separates Write (Command) datastore and Read (Query) datastore, so we need something to replicate the writer DB to reader one with some transformation. In this app, the Lambda function will be invoked each hour and reads aggregated data, then write back to PostgreSQL table with real timestamp. As long as we need time-based complex query, PostgreSQL would be better than DynamoDB.
 
-## Getting Started
+## Getting Started 🚀
 
-And simply execute
+You can run each application locally by following steps
 
 ```bash
-./gradlew run
+docker build -t cqrs-api . -f api.Dockerfile
+docker build -t cqrs-rmu . -f rmu.Dockerfile
 ```
 
-you can also test each url path
+Command App
 ```bash
-./gradlew test
+docker run \
+-e CQRS_MODE=COMMAND 
+-e AWS_SECRET_KEY_ID=xxxxxxx
+-e AWS_SECRET_ACCESS_KEY=xxxxxxx
+-it api
 ```
 
+Query App
 
-## Hosting
+```bash
+docker run \
+-e CQRS_MODE=QUERY
+-e DATABASE_ENDPOINT=xxxxxxx
+-e DATABASE_USER_NAME=xxxxxxx
+-e DATABASE_PASSWORD=xxxxxxx
+-it api
+```
+Or simply run
+
+```bash
+docker-compose up -d
+```
+
+## Hosting on AWS ☁️
 All the resources are manged by Terraform to archive Infrastructure as Code. You can just execute following command at `/terraform` directory.
 
 ```
