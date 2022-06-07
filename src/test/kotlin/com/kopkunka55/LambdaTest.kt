@@ -11,7 +11,7 @@ internal class LambdaTest {
 
     @Test
     fun `Success Pattern`(){
-        val main = Main()
-        main.handleRequest(mapOf(), context)
+        val ecsTask = ReadModelUpdater()
+        ecsTask.update()
     }
 }

@@ -13,7 +13,15 @@ plugins {
 group = "com.kopkunka55"
 version = "0.0.1"
 application {
-    mainClass.set("io.ktor.server.netty.EngineMain")
+    when(project.findProperty("mainClass").toString()){
+        "API" -> {
+            mainClass.set("io.ktor.server.netty.EngineMain")
+        }
+        "RMU" -> {
+            base.archivesName.set("RMU")
+            mainClass.set("com.kopkunka55.RMUKt")
+        }
+    }
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")

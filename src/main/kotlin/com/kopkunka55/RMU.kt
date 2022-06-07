@@ -1,7 +1,5 @@
 package com.kopkunka55
 
-import com.amazonaws.services.lambda.runtime.Context
-import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.kopkunka55.infrastructure.QueryRecordRepositoryImpl
 import com.kopkunka55.repository.QueryRecordRepository
 import org.jetbrains.exposed.sql.Database
@@ -15,7 +13,12 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-class Main: RequestHandler<Map<String,String>, Unit>{
+fun main(){
+    val readModelUpdater = ReadModelUpdater()
+    readModelUpdater.update()
+}
+
+class ReadModelUpdater {
     private val ddbClient = DynamoDbClient.builder()
         .region(Region.US_EAST_1)
         .credentialsProvider(ProfileCredentialsProvider.create())
@@ -31,9 +34,7 @@ class Main: RequestHandler<Map<String,String>, Unit>{
             driver = "org.postgresql.Driver"
         )
     }
-
-    override fun handleRequest(input: Map<String, String>?, context: Context?) {
-        // val logger = context?.logger
+    fun update() {
         val currentTime = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
         val dtf = DateTimeFormatter.ofPattern("yyyyMMddHH")
         val dtfWithTZ = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
@@ -47,7 +48,6 @@ class Main: RequestHandler<Map<String,String>, Unit>{
             .key(key)
             .build()
         val summaryPerHour = ddbClient.getItem(request)
-        // logger?.log("Summary: " + summaryPerHour.item().toString())
 
         if (!summaryPerHour.hasItem()) {
             println("NO ITEM")
@@ -63,7 +63,5 @@ class Main: RequestHandler<Map<String,String>, Unit>{
                 currentTime.withMinute(0).withSecond(0).format(dtfWithTZ),
                 amount!!)
         }
-
-        return
     }
 }

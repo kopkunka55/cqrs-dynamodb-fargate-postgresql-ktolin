@@ -18,11 +18,7 @@ data class QueryRecord(val datetime: String, val amount: Float)
 fun Route.configureQueryRouter() {
     val queryRecordRepository: QueryRecordRepository by inject()
 
-    route("/query"){
-        get("/health-check") {
-            call.respondText("OK")
-        }
-        post("/search") {
+        post("/search"){
             val req = call.receive<HistoryRequest>()
             val records = transaction {
                 queryRecordRepository.getRecordsBetweenDates(
@@ -31,6 +27,5 @@ fun Route.configureQueryRouter() {
             }
             call.respond(records.map { QueryRecord(it.datetime, it.amount) })
         }
-    }
 
 }
