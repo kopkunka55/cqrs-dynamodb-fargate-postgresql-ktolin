@@ -22,8 +22,11 @@ fun Application.module() {
     val logger = LoggerFactory.getLogger("Application")
 
     routing {
-        get("/health-check") {
-            call.respondText("OK")
+        route("/"){
+            get("/health-check") {
+                call.respondText("OK")
+            }
+
         }
     }
 
