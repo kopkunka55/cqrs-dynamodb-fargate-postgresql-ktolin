@@ -23,6 +23,10 @@ fun Route.configureQueryRouter() {
     val logger = LoggerFactory.getLogger("QueryController")
     val queryRecordRepository: QueryRecordRepository by inject()
 
+    route("/"){
+        get("/health-check"){
+           call.respondText("OK\n")
+        }
         post("/search"){
             val req = try { call.receive<HistoryRequest>() } catch (e: Exception){ throw BadRequestException("Request Data format is wrong") }
             if (req.startDateTime == null || req.endDateTime == null){
@@ -44,5 +48,7 @@ fun Route.configureQueryRouter() {
             }
             call.respond(records.map { QueryRecord(it.datetime, it.amount) })
         }
+    }
+
 
 }

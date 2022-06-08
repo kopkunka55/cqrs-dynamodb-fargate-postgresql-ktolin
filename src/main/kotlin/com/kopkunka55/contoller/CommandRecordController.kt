@@ -17,6 +17,10 @@ data class CommandRecord(val datetime: String, val amount: Float)
 fun Route.configureCommandRouter() {
     val logger = LoggerFactory.getLogger("CommandController")
     val commandRecordRepository: CommandRecordRepository by inject()
+    route("/"){
+        get("/health-check"){
+           call.respondText("OK\n")
+        }
         post {
             val request = try {call.receive<CommandRecord>()} catch (e: Exception) {throw BadRequestException("Input data format is wrong")}
             if (request.datetime == null || request.amount ==null){
@@ -38,4 +42,5 @@ fun Route.configureCommandRouter() {
                 throw Throwable("Internal Server Error")
             }
         }
+    }
 }

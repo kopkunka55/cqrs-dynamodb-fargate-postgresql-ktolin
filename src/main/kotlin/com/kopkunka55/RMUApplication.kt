@@ -28,9 +28,9 @@ class ReadModelUpdater {
 
     init {
         Database.connect(
-            url = System.getenv("DATABASE_ENDPOINT").toString(),
-            user = System.getenv("DATABASE_USER").toString(),
-            password = System.getenv("DATABASE_PASSWORD").toString(),
+            url = "jdbc:postgresql://${System.getenv("DATABASE_ENDPOINT")}/anywallet",
+            user = System.getenv("DATABASE_USER"),
+            password = System.getenv("DATABASE_PASSWORD"),
             driver = "org.postgresql.Driver"
         )
     }
