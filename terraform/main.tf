@@ -256,7 +256,11 @@ resource "aws_lb_target_group" "alb-query-tg" {
   vpc_id   = data.aws_vpc.vpc.id
   target_type = "ip"
   health_check {
-   path = "/health-check"
+    path = "/health-check"
+    timeout = 30
+    interval = 60
+    healthy_threshold = 2
+    unhealthy_threshold = 5
   }
   tags = {
     "Name" = "${var.project_name}-${var.env_name}-alb-query-tg"
@@ -271,6 +275,10 @@ resource "aws_lb_target_group" "alb-command-tg" {
   vpc_id   = data.aws_vpc.vpc.id
   health_check {
     path = "/health-check"
+    timeout = 30
+    interval = 60
+    healthy_threshold = 2
+    unhealthy_threshold = 5
   }
   tags = {
     "Name" = "${var.project_name}-${var.env_name}-alb-command-tg"
@@ -365,7 +373,7 @@ resource "aws_ecs_task_definition" "ecs-query-task-df" {
   container_definitions = jsonencode([
     {
       name      = "query-api"
-      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/anywallet-api:v1.0.4"
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/anywallet-query-api:v1.0.0"
       cpu       = 256
       memory    = 512
       essential = true
@@ -380,7 +388,7 @@ resource "aws_ecs_task_definition" "ecs-query-task-df" {
       environment = [
         {
           name = "DATABASE_ENDPOINT"
-          value = "jdbc:postgresql://${aws_rds_cluster.aurora-cluster.endpoint}/anywallet"
+          value = aws_rds_cluster.aurora-cluster.endpoint
         },
         {
           name = "DATABASE_USER"
@@ -389,14 +397,6 @@ resource "aws_ecs_task_definition" "ecs-query-task-df" {
         {
           name = "DATABASE_PASSWORD"
           value = var.aurora_password
-        },
-        {
-          name = "PORT"
-          value = "8080"
-        },
-        {
-          name = "CQRS_MODE"
-          value = "QUERY"
         }
       ]
       portMappings = [
@@ -423,7 +423,7 @@ resource "aws_ecs_task_definition" "ecs-command-task-df" {
   container_definitions = jsonencode([
     {
       name      = "command-api"
-      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/anywallet-api:v1.0.4"
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/anywallet-command-api:v1.0.0"
       cpu       = 256
       memory    = 512
       essential = true
@@ -435,16 +435,6 @@ resource "aws_ecs_task_definition" "ecs-command-task-df" {
           awslogs-group = "/ecs/anywallet/command"
         }
       }
-      environment = [
-        {
-          name = "PORT"
-          value = "8080"
-        },
-        {
-          name = "CQRS_MODE"
-          value = "COMMAND"
-        }
-      ]
       portMappings = [
         {
           containerPort = 8080
@@ -541,7 +531,7 @@ resource "aws_ecs_task_definition" "ecs-rmu-task-df" {
   container_definitions = jsonencode([
     {
       name      = "rmu"
-      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/anywallet-rmu:v1.0.0"
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/anywallet-rmu:v1.0.1"
       cpu       = 256
       memory    = 512
       essential = true
@@ -556,7 +546,7 @@ resource "aws_ecs_task_definition" "ecs-rmu-task-df" {
       environment = [
         {
           name = "DATABASE_ENDPOINT"
-          value = "jdbc:postgresql://${aws_rds_cluster.aurora-cluster.endpoint}/anywallet"
+          value = aws_rds_cluster.aurora-cluster.endpoint
         },
         {
           name = "DATABASE_USER"

@@ -15,12 +15,20 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class ApplicationTest {
-
     @Test
     fun queryHealthCheck() = testApplication  {
+
         client.get("/health-check").apply {
             assertEquals(HttpStatusCode.OK, status)
-            assertEquals("OK", bodyAsText())
+            assertEquals("OK\n", bodyAsText())
+        }
+    }
+
+    @Test
+    fun commandHealthCheck() = testApplication  {
+        client.get("/health-check").apply {
+            assertEquals(HttpStatusCode.OK, status)
+            assertEquals("OK\n", bodyAsText())
         }
     }
 

@@ -56,33 +56,27 @@ CQRS pattern separates Write (Command) datastore and Read (Query) datastore, so 
 You can run each application locally by following steps
 
 ```bash
-docker build -t cqrs-api . -f api.Dockerfile
+docker build -t cqrs-command-api . -f api.Dockerfile --build-arg CQRS=command 
+docker build -t cqrs-query-api . -f api.Dockerfile --build-arg CQRS=query 
 docker build -t cqrs-rmu . -f rmu.Dockerfile
 ```
 
 Command App
 ```bash
 docker run \
--e CQRS_MODE=COMMAND 
 -e AWS_SECRET_KEY_ID=xxxxxxx
 -e AWS_SECRET_ACCESS_KEY=xxxxxxx
--it api
+-it cqrs-command-api
 ```
 
 Query App
 
 ```bash
 docker run \
--e CQRS_MODE=QUERY
 -e DATABASE_ENDPOINT=xxxxxxx
 -e DATABASE_USER_NAME=xxxxxxx
 -e DATABASE_PASSWORD=xxxxxxx
--it api
-```
-Or simply run
-
-```bash
-docker-compose up -d
+-it cqrs-query-api
 ```
 
 ## Hosting on AWS ☁️
